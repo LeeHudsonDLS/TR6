@@ -1,0 +1,11 @@
+<sequencer>
+	<slave>0</slave>
+	<setup_synth_set>
+		<unit>ramp</unit>
+		<type>ramp</type>
+		<rate>10</rate>
+		<end_ampl>-2147483574.51261
+		</end_ampl>
+	</setup_synth_set>
+  <start></start>
+</sequencer>
