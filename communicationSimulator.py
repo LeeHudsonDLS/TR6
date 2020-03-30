@@ -5,11 +5,11 @@ import socket
 from threading import *
 
 
-class server(Thread):
-    def __init__(self, socket, address):
+class tcpServer(Thread):
+    def __init__(self, ipAddress, portNumber):
         Thread.__init__(self)
-        self.sock = socket
-        self.addr = address
+        self.ipAddress = ipAddress
+        self.portNumber = portNumber
         self.buffer = ""
         self.start()
         self.data = {
@@ -18,22 +18,33 @@ class server(Thread):
             "M":'R',
             "L":0
         }
+        print("Created server object...")
 
     def handShake(self):
         # Send "HELLO\r\n"
-        self.sock.send(f"HELLO\r\n".encode())
+        self.serverSocket.send(f"HELLO\r\n".encode())
 
         # Wait for response code and check it's correct
-        data = self.sock.recv(4096)
+        data = self.serverSocket.recv(4096)
         assert data.rstrip()==b"DLS,1.00,1234","Driver sent %s" % data
 
         # Send "OK\r\n"
-        self.sock.send(f"OK\r\n".encode())
+        self.serverSocket.send(f"OK\r\n".encode())
 
     def run(self):
+
+        # Configure the socket
+        tcpCommandServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcpCommandServer.bind((self.ipAddress, self.portNumber))
+        tcpCommandServer.listen()
+        print(f"Listening on {self.ipAddress}:{self.portNumber}")
+
+        self.serverSocket, address = tcpCommandServer.accept()
+        print("Client connected")
+
         self.handShake()
-        while(1==1):
-            self.buffer+=self.sock.recv(4096).decode()
+        while True:
+            self.buffer+=self.serverSocket.recv(4096).decode()
             if(self.buffer.count("</") == self.buffer.count("<")/2):
                 print("Got xml:")
                 print(self.buffer)
@@ -45,16 +56,5 @@ tcpCommandPort = 51512
 udpStreamPort = 51513
 tcpEventPort = 51515
 
-
-# Server for main TCP comms. Server is controller
-tcpCommandServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-tcpCommandServer.bind(("localhost", tcpCommandPort))
-
-
-tcpCommandServer.listen()
-print ('TCP command server started and listening')
-while 1:
-    print ('Waiting for connection')
-    serverSocket, address = tcpCommandServer.accept()
-    print ('Connection received')
-    server(serverSocket, address)
+# Create main TCP command server
+tcpServer("localhost",tcpCommandPort)
