@@ -2,12 +2,14 @@
 # streamDevice. Run this on a local machine and point the AsynIP port to localhost:8000.
 
 import socket
+from Pcs8000Controller import Pcs8000Controller
 from threading import *
 
 
 class tcpServer(Thread):
-    def __init__(self, ipAddress, portNumber):
+    def __init__(self, ipAddress, portNumber,masterController):
         Thread.__init__(self)
+        self.masterController = masterController
         self.ipAddress = ipAddress
         self.portNumber = portNumber
         self.buffer = ""
@@ -18,7 +20,6 @@ class tcpServer(Thread):
             "M":'R',
             "L":0
         }
-        print("Created server object...")
 
     def handShake(self):
         # Send "HELLO\r\n"
@@ -51,10 +52,14 @@ class tcpServer(Thread):
                 self.buffer=""
 
 
+
 # Ports:
 tcpCommandPort = 51512
 udpStreamPort = 51513
 tcpEventPort = 51515
 
+# Create controller objects:
+masterController = Pcs8000Controller(0)
+
 # Create main TCP command server
-tcpServer("localhost",tcpCommandPort)
+tcpServer("localhost",tcpCommandPort,masterController)
