@@ -8,6 +8,10 @@ pytest = "*"
 
 [packages]
 pyserial = "*"
+untangle = "*"
+xmltodict = "*"
+xml = "*"
+xml-etree-elementtree = "*"
 
 [requires]
 python_version = "3.7"

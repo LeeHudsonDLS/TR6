@@ -1,4 +1,4 @@
 <udpxmit>
     <slave>0</slave>
-    <clear></clear>
+    <start></start>
 </udpxmit>

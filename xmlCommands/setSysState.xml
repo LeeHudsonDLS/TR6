@@ -1,0 +1,6 @@
+<maincontrol>
+    <slave>2</slave>
+    <set>
+        <sys_state>"Readsy"</sys_state>
+    </set>
+</maincontrol>

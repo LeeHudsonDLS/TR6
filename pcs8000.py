@@ -200,16 +200,19 @@ class PCS8000:
     async def connect(self):
         loop = asyncio.get_running_loop()
         # Bring up UDP server
-        self.transport, self.protocol = await loop.create_datagram_endpoint(
-            PCS8000UDPProtocol, local_addr=("192.168.113.12", 51513))
+        #self.transport, self.protocol = await loop.create_datagram_endpoint(
+            #PCS8000UDPProtocol, local_addr=("localhost", 51513))
         # Bring up event TCP server
         self.event_server = await loop.create_server(
-            PCS8000TCPProtocol, "192.168.113.12", 51515)
+            PCS8000TCPProtocol, "localhost", 51515)
         self.event_server_f = self.event_server.serve_forever()
         # Make connection
+        print("Opening connection")
         self.reader, self.writer = await asyncio.open_connection(self.ip, 51512)
+        print("Connection opened, waiting for read")
         # Initial handshake
         data = await self.reader.readline()
+        print("Got something")
         print(data)
         assert data.rstrip() == b"HELLO", "Controller sent %s" % data
         self.writer.write(f"{NAME},{VERSION},{CODE}".encode())
@@ -218,46 +221,12 @@ class PCS8000:
         assert data.rstrip() == b"OK", "Controller sent %s" % data
         # Check what mode it is in
 
-
+        # Clear UDP subscription on slave 0
         await self.send_recv_xml(clearUDP0)
+        # Subscribe to phys14 on slave 0
         await self.send_recv_xml(register0)
-        #await asyncio.sleep(5.0)
+        # Start UDP stream
         await self.send_recv_xml(start0)
-
-        #Enable drive
-
-        #print(await self.send_recv_xml(mainControlGet))
-        await asyncio.sleep(1.0)
-        await self.send_recv_xml(mainControlSet0)
-        #await self.send_recv_xml(mainControlSet1)
-        #print(await self.send_recv_xml(mainControlGet))
-        #print("Drive Enabled\n")
-        #await asyncio.sleep(5.0)
-        # Setup events
-        #await self.xml_cmd("eventcom", "start", "")
-        # Wait for a bit
-        await asyncio.sleep(5.0)
-
-        # Send a sequencer program down
-        xml = open(r"/dls/home/jjc62351/work/BL11K/TR6/force.xml").read()
-        print("Sending XML\n")
-        await self.send_recv_xml(xml)
-        await asyncio.sleep(1.0)
-
-        #xml1 = open(r"/dls/home/jjc62351/work/BL11K/TR6/doin7Base/AbsMove1.xml").read()
-        #print("Sending XML1\n")
-        #print(await self.send_recv_xml(xml1))
-
-
-        print(await self.send_recv_xml(startSeq0))
-        print("Starting slave0\n")
-        await asyncio.sleep(5.0)
-
-        #await self.send_recv_xml(startSeq1)
-        await asyncio.sleep(1.0)
-        print(await self.send_recv_xml(mainControlGet))
-        #print("Starting slave0\n")
-
 
         await asyncio.sleep(60.0)
 
@@ -276,11 +245,12 @@ class PCS8000:
         self.writer.write(xml.encode())
         marker = "</" + xml.rsplit("</", 1)[1]
         try:
-            data = await asyncio.wait_for(self.reader.readuntil(marker.encode()), timeout=1.0)
+            data = await asyncio.wait_for(self.reader.readuntil(marker.encode()), timeout=5.0)
         except asyncio.TimeoutError:
             print("***\n" + self.reader._buffer.decode() + "\n***" + marker)
             raise
         ret = data.decode() + marker
+        print(f"Got:\n{ret}")
         if "<ackn>OK</ackn>" not in ret:
             print("---\n" + ret)
         return ret
@@ -291,6 +261,6 @@ class PCS8000:
 
 #DLS1.001234
 #1,1.00
-pcs = PCS8000("192.168.113.10")
+pcs = PCS8000("localhost")
 asyncio.run(pcs.connect())
         

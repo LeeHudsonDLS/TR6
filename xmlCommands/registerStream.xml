@@ -1,0 +1,6 @@
+<udpxmit>
+    <slave>0</slave>
+    <register>
+        <stream>phys1</stream>
+    </register>
+</udpxmit>

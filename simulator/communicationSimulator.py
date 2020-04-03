@@ -3,8 +3,7 @@
 import logging
 from Pcs8000Controller import Pcs8000Controller
 from Pcs8000ControllerMaster import Pcs8000ControllerMaster
-from TCPCommandServer import TCPCommandServer
-from TCPEventClient import TCPEventClient
+from Pcs8000Connections import TCPCommandServer,TCPEventClient
 
 
 

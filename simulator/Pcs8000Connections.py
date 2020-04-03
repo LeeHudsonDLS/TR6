@@ -4,7 +4,7 @@ from Pcs8000ControllerMaster import Pcs8000ControllerMaster
 from threading import *
 import socket
 
-class TCPEventClient(Thread):
+class Pcs8000Connection(Thread):
     def __init__(self, ipAddress, portNumber,masterController):
         Thread.__init__(self)
         self.masterController = masterController
@@ -13,7 +13,7 @@ class TCPEventClient(Thread):
         self.buffer = ""
         self.start()
 
-    def handShake(self):
+    def serverHandShake(self):
         # Send "HELLO\r\n"
         self.serverSocket.send(f"HELLO\r\n".encode())
 
@@ -23,6 +23,36 @@ class TCPEventClient(Thread):
 
         # Send "OK\r\n"
         self.serverSocket.send(f"OK\r\n".encode())
+
+
+class TCPCommandServer(Pcs8000Connection):
+    def __init__(self,ipAddress,portNumber,masterController):
+        Pcs8000Connection.__init__(self,ipAddress,portNumber,masterController)
+
+
+    def run(self):
+
+        # Configure the socket
+        tcpCommandServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        tcpCommandServer.bind((self.ipAddress, self.portNumber))
+        tcpCommandServer.listen()
+        print(f"Listening on {self.ipAddress}:{self.portNumber}")
+
+        self.serverSocket, address = tcpCommandServer.accept()
+        print("Client connected")
+
+        self.serverHandShake()
+        while True:
+            self.buffer+=self.serverSocket.recv(4096).decode()
+            if(self.buffer.count("</") == self.buffer.count("<")/2):
+                response = self.masterController.parseCommand(self.buffer)
+                self.serverSocket.send(response.encode())
+                self.buffer=""
+
+
+class TCPEventClient(Pcs8000Connection):
+    def __init__(self,ipAddress,portNumber,masterController):
+        Pcs8000Connection.__init__(self,ipAddress,portNumber,masterController)
 
     def run(self):
 
