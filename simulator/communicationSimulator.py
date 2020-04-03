@@ -16,12 +16,6 @@ class tcpServer(Thread):
         self.portNumber = portNumber
         self.buffer = ""
         self.start()
-        self.data = {
-            "P":101,
-            "T":102,
-            "M":'R',
-            "L":0
-        }
 
     def handShake(self):
         # Send "HELLO\r\n"
@@ -62,12 +56,6 @@ class tcpClient(Thread):
         self.portNumber = portNumber
         self.buffer = ""
         self.start()
-        self.data = {
-            "P":101,
-            "T":102,
-            "M":'R',
-            "L":0
-        }
 
     def handShake(self):
         # Send "HELLO\r\n"
@@ -83,21 +71,19 @@ class tcpClient(Thread):
     def run(self):
 
         # Configure the socket
-        tcpCommandServer = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        tcpCommandServer.bind((self.ipAddress, self.portNumber))
-        tcpCommandServer.listen()
-        print(f"Listening on {self.ipAddress}:{self.portNumber}")
+        tcpEventClient = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        connected = False
+        while not connected:
+            try:
+                tcpEventClient.connect((self.ipAddress, self.portNumber))
+                connected = True
+            except Exception as e:
+                pass
+        data = tcpEventClient.recv(1024)
+        print(f"TCP Event port got {data.decode()}")
 
-        self.serverSocket, address = tcpCommandServer.accept()
-        print("Client connected")
 
-        self.handShake()
-        while True:
-            self.buffer+=self.serverSocket.recv(4096).decode()
-            if(self.buffer.count("</") == self.buffer.count("<")/2):
-                response = masterController.parseCommand(self.buffer)
-                self.serverSocket.send(response.encode())
-                self.buffer=""
+
 logging.basicConfig(level=logging.DEBUG)
 # Ports:
 tcpCommandPort = 51512
@@ -113,3 +99,4 @@ masterController.addSlave(slave2)
 
 # Create main TCP command server
 tcpServer("localhost",tcpCommandPort,masterController)
+tcpClient("localhost",tcpEventPort,masterController)
