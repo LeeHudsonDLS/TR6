@@ -13,17 +13,25 @@ class Pcs8000Connection(Thread):
         self.buffer = ""
         self.start()
 
-    def serverHandShake(self):
+    def serverHandShake(self,socket):
         # Send "HELLO\r\n"
-        self.serverSocket.send(f"HELLO\r\n".encode())
+        socket.send(f"HELLO\r\n".encode())
 
         # Wait for response code and check it's correct
-        data = self.serverSocket.recv(4096)
+        data = socket.recv(4096)
         assert data.rstrip()==b"DLS,1.00,1234","Driver sent %s" % data
 
         # Send "OK\r\n"
-        self.serverSocket.send(f"OK\r\n".encode())
+        socket.send(f"OK\r\n".encode())
 
+    def clientHandShake(self,socket):
+        # Wait for a "HELLO\r\n"
+        data = socket.recv(4096)
+        assert data==b"HELLO","Driver sent %s" % data
+        print(f"Got : {data}")
+
+        # Send "OK\r\n"
+        socket.send(f"OK\r\n".encode())
 
 class TCPCommandServer(Pcs8000Connection):
     def __init__(self,ipAddress,portNumber,masterController):
@@ -41,7 +49,7 @@ class TCPCommandServer(Pcs8000Connection):
         self.serverSocket, address = tcpCommandServer.accept()
         print("Client connected")
 
-        self.serverHandShake()
+        self.serverHandShake(self.serverSocket)
         while True:
             self.buffer+=self.serverSocket.recv(4096).decode()
             if(self.buffer.count("</") == self.buffer.count("<")/2):
@@ -65,5 +73,6 @@ class TCPEventClient(Pcs8000Connection):
                 connected = True
             except Exception as e:
                 pass
-        data = tcpEventClient.recv(1024)
-        print(f"TCP Event port got {data.decode()}")
+        self.clientHandShake(tcpEventClient)
+        while True:
+            data = tcpEventClient.recv(1024)

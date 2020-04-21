@@ -10,7 +10,7 @@ from Pcs8000Connections import TCPCommandServer,TCPEventClient
 
 
 
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.INFO)
 # Ports:
 tcpCommandPort = 51512
 udpStreamPort = 51513
