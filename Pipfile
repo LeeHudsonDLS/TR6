@@ -12,6 +12,7 @@ untangle = "*"
 xmltodict = "*"
 xml = "*"
 xml-etree-elementtree = "*"
+pylint = "*"
 
 [requires]
 python_version = "3.7"
